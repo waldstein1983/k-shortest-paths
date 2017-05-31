@@ -1,7 +1,11 @@
 package edu.ufl.cise.bsmock.graph.ksp;
 
-import edu.ufl.cise.bsmock.graph.*;
-import edu.ufl.cise.bsmock.graph.util.*;
+import edu.ufl.cise.bsmock.graph.Edge;
+import edu.ufl.cise.bsmock.graph.Graph;
+import edu.ufl.cise.bsmock.graph.util.Dijkstra;
+import edu.ufl.cise.bsmock.graph.util.Path;
+import edu.ufl.cise.bsmock.graph.util.ShortestPathTree;
+
 import java.util.*;
 
 /**
@@ -33,7 +37,7 @@ import java.util.*;
  * Created by Brandon Smock on April 6, 2016.
  * Last updated by Brandon Smock on April 7, 2016.
  */
-public class SimpleEppstein implements KSPAlgorithm, KSPAlgorithmCutoff {
+public class SimpleEppstein implements KSPAlgorithm {
 
     public boolean isLoopless() {
         return false;

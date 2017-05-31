@@ -13,7 +13,7 @@ public class Graph {
     private HashMap<String,Node> nodes;
 
     public Graph() {
-        nodes = new HashMap<String,Node>();
+        nodes = new HashMap<>();
     }
 
     public Graph(String filename) {
@@ -187,7 +187,7 @@ public class Graph {
         Iterator<String> it = nodes.keySet().iterator();
         while (it.hasNext()) {
             String nodeLabel = it.next();
-            graphStringB.append(nodeLabel.toString());
+            graphStringB.append(nodeLabel);
             graphStringB.append(": {");
             Node node = nodes.get(nodeLabel);
             Set<String> adjacencyList = node.getAdjacencyList();
@@ -195,7 +195,7 @@ public class Graph {
             HashMap<String, Double> neighbors = node.getNeighbors();
             while (alIt.hasNext()) {
                 String neighborLabel = alIt.next();
-                graphStringB.append(neighborLabel.toString());
+                graphStringB.append(neighborLabel);
                 graphStringB.append(": ");
                 graphStringB.append(neighbors.get(neighborLabel));
                 if (alIt.hasNext())

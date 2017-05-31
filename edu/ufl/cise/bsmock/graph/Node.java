@@ -13,7 +13,7 @@ import java.util.LinkedList;
 import java.util.Set;
 
 public class Node {
-    protected String label;
+    private String label;
     protected HashMap<String,Double> neighbors; // adjacency list, with HashMap for each edge weight
 
     public Node() {
@@ -77,7 +77,7 @@ public class Node {
         HashMap<String, Double> neighbors = this.getNeighbors();
         while (alIt.hasNext()) {
             String neighborLabel = alIt.next();
-            nodeStringB.append(neighborLabel.toString());
+            nodeStringB.append(neighborLabel);
             nodeStringB.append(": ");
             nodeStringB.append(neighbors.get(neighborLabel));
             if (alIt.hasNext())
