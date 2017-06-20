@@ -10,12 +10,12 @@ public class ShortestPathTree {
     private final String root;
 
     public ShortestPathTree() {
-        this.nodes = new HashMap<String, DijkstraNode>();
+        this.nodes = new HashMap<>();
         this.root = "";
     }
 
     public ShortestPathTree(String root) {
-        this.nodes = new HashMap<String, DijkstraNode>();
+        this.nodes = new HashMap<>();
         this.root = root;
     }
 

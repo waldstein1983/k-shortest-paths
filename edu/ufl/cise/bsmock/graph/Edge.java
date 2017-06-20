@@ -10,26 +10,33 @@ public class Edge implements Cloneable {
     private String toNode;
     private double weight;
     private double capacity;
+    private double originWeight;
 
     public Edge() {
         this.fromNode = null;
         this.toNode = null;
         this.weight = Double.MAX_VALUE;
+        this.originWeight = weight;
     }
 
     public Edge(String fromNode, String toNode, double weight) {
         this.fromNode = fromNode;
         this.toNode = toNode;
         this.weight = weight;
+        this.originWeight = weight;
     }
 
     public Edge(String fromNode, String toNode, double weight, double capacity) {
         this.fromNode = fromNode;
         this.toNode = toNode;
         this.weight = weight;
+        this.originWeight = weight;
         this.capacity = capacity;
     }
 
+    public String getId(){
+        return fromNode + "-" + toNode;
+    }
 
     public String getFromNode() {
         return fromNode;
@@ -92,5 +99,13 @@ public class Edge implements Cloneable {
             return true;
 
         return false;
+    }
+
+    public double getOriginWeight() {
+        return originWeight;
+    }
+
+    public void setOriginWeight(double originWeight) {
+        this.originWeight = originWeight;
     }
 }

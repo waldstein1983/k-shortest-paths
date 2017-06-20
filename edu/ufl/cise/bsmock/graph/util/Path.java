@@ -11,10 +11,12 @@ import edu.ufl.cise.bsmock.graph.*;
  */
 public class Path implements Cloneable, Comparable<Path> {
     private LinkedList<Edge> edges;
+    private LinkedList<String> edgeIds;
     private double totalCost;
 
     public Path() {
         edges = new LinkedList<Edge>();
+        edgeIds = new LinkedList<>();
         totalCost = 0;
     }
 
@@ -38,6 +40,14 @@ public class Path implements Cloneable, Comparable<Path> {
 
     public LinkedList<Edge> getEdges() {
         return edges;
+    }
+
+    public LinkedList<String> getEdgeIds() {
+        return edgeIds;
+    }
+
+    public void setEdgeIds(LinkedList<String> edgeIds) {
+        this.edgeIds = edgeIds;
     }
 
     public void setEdges(LinkedList<Edge> edges) {
@@ -73,6 +83,7 @@ public class Path implements Cloneable, Comparable<Path> {
     }
 
     public void addFirst(Edge edge) {
+        edgeIds.addFirst(edge.getId());
         edges.addFirst(edge);
         totalCost += edge.getWeight();
     }

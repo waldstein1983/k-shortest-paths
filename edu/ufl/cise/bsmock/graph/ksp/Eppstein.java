@@ -1,7 +1,13 @@
 package edu.ufl.cise.bsmock.graph.ksp;
 
-import edu.ufl.cise.bsmock.graph.*;
-import edu.ufl.cise.bsmock.graph.util.*;
+import edu.ufl.cise.bsmock.graph.Edge;
+import edu.ufl.cise.bsmock.graph.Graph;
+import edu.ufl.cise.bsmock.graph.Node;
+import edu.ufl.cise.bsmock.graph.util.Dijkstra;
+import edu.ufl.cise.bsmock.graph.util.DijkstraNode;
+import edu.ufl.cise.bsmock.graph.util.Path;
+import edu.ufl.cise.bsmock.graph.util.ShortestPathTree;
+
 import java.util.*;
 
 /**
@@ -32,6 +38,100 @@ public class Eppstein implements KSPAlgorithm {
     }
 
     public Eppstein() {};
+
+    /**
+     * Compute sub-heap H_out(v) for node v.
+     *
+     * @param nodeLabel             node v
+     * @param graph                 the graph, G, on which to compute the K shortest paths from s to t
+     * @param sidetrackEdgeCostMap  the cost of each sidetrack edge in G
+     * @param nodeHeaps             an index/hash table of heap H_out(v), for each node v in the graph
+     * @param edgeHeaps             an index/hash table of heaps H_out(v), but indexed by sidetrack edge
+     */
+    protected static void computeOutHeap(String nodeLabel, Graph graph, HashMap<String,Double> sidetrackEdgeCostMap, HashMap<String,EppsteinHeap> nodeHeaps, HashMap<String,EppsteinHeap> edgeHeaps) {
+        Node node = graph.getNode(nodeLabel);
+        // This list holds the 2nd through last sidetrack edges, ordered by sidetrack cost
+        ArrayList<Edge> sidetrackEdges = new ArrayList<Edge>();
+        Edge bestSidetrack = null;
+        double minSidetrackCost = Double.MAX_VALUE;
+        // Iterate over the outgoing edges of v
+        for (String neighbor : node.getAdjacencyList()) {
+            String edgeLabel = nodeLabel+","+neighbor;
+            // Check to see if the current edge is a sidetrack edge
+            if (sidetrackEdgeCostMap.containsKey(edgeLabel)) {
+                double sidetrackEdgeCost = sidetrackEdgeCostMap.get(edgeLabel);
+                // Check to see if the current sidetrack edge has the lowest cost discovered so far for node v
+                if (sidetrackEdgeCost < minSidetrackCost) {
+                    // If there was a previously-known best sidetrack edge, add it to the list of non-best
+                    // sidetrack edges
+                    if (bestSidetrack != null) {
+                        sidetrackEdges.add(bestSidetrack);
+                    }
+                    // Set the new best (lowest cost) sidetrack edge to be the current one
+                    bestSidetrack = new Edge(nodeLabel, neighbor, node.getNeighbors().get(neighbor));
+                    minSidetrackCost = sidetrackEdgeCost;
+                }
+                // If current sidetrack edge is not the one with the lowest cost, add it to the list of non-best
+                // sidetrack edges
+                else {
+                    sidetrackEdges.add(new Edge(nodeLabel, neighbor, node.getNeighbors().get(neighbor)));
+                }
+            }
+        }
+        // If v was found to have at least one outgoing sidetrack edge...
+        if (bestSidetrack != null) {
+            // ...make a heap of the outgoing sidetrack edges of v, with the lowest-cost sidetrack edge put as the
+            // root
+            EppsteinHeap bestSidetrackHeap = new EppsteinHeap(bestSidetrack,sidetrackEdgeCostMap.get(bestSidetrack.getFromNode()+","+bestSidetrack.getToNode()));
+
+            // Make another heap (a binary heap) out of the rest of the sidetrack edges of v
+            EppsteinArrayHeap arrayHeap = new EppsteinArrayHeap();
+            if (sidetrackEdges.size() > 0) {
+                bestSidetrackHeap.setNumOtherSidetracks(bestSidetrackHeap.getNumOtherSidetracks() + 1);
+                for (Edge edge : sidetrackEdges) {
+                    EppsteinHeap sidetrackHeap = new EppsteinHeap(edge, sidetrackEdgeCostMap.get(edge.getFromNode() + "," + edge.getToNode()));
+                    edgeHeaps.put(edge.getFromNode() + "," + edge.getToNode(), sidetrackHeap);
+                    arrayHeap.add(sidetrackHeap);
+                }
+
+                // Add the binary heap of 2nd-through-last lowest cost sidetrack edges as a child (the only child)
+                // of the lowest-cost sidetrack edge, forming the overall heap H_out(v)
+                bestSidetrackHeap.addChild(arrayHeap.toEppsteinHeap());
+            }
+
+            // Index H_out(v) by node v, for easy access later
+            nodeHeaps.put(nodeLabel, bestSidetrackHeap);
+            // Index H_out(v) by its lowest cost sidetrack edge, for easy access later
+            edgeHeaps.put(bestSidetrack.getFromNode() + "," + bestSidetrack.getToNode(), bestSidetrackHeap);
+        }
+    }
+
+    /**
+     * Compute the set of sidetrack edge costs.
+     *
+     * Each sidetrack edge (u,v) is an edge in graph G that does not appear in the shortest path tree, T.
+     * For every sidetrack edge (u,v), compute S(u,v) = w(u,v) + d(v) - d(u), where w(u,v) is the cost of edge (u,v);
+     * and d(v) is the cost of the shortest path from node v to the target.
+     *
+     * @param graph     the graph on which to compute the K shortest paths from s to t
+     * @param tree      the shortest path tree, T, rooted at the target node, t
+     * @return
+     */
+    protected static HashMap<String,Double> computeSidetrackEdgeCosts(Graph graph, ShortestPathTree tree) {
+        HashMap<String, Double> sidetrackEdgeCostMap = new HashMap<String, Double>();
+        List<Edge> edgeList = graph.getEdgeList();
+        for (Edge edge : edgeList) {
+            // Check to see if the target node is reachable from the outgoing vertex of the current edge,
+            // and check to see if the current edge is a sidetrack edge. If so, calculate its sidetrack cost.
+            String tp = tree.getParentOf(edge.getFromNode());
+            if (tp == null || !tp.equals(edge.getToNode())) {
+                double sidetrackEdgeCost = edge.getWeight() + tree.getNodes().get(edge.getToNode()).getDist() - tree.getNodes().get(edge.getFromNode()).getDist();
+                sidetrackEdgeCostMap.put(edge.getFromNode() + "," + edge.getToNode(), sidetrackEdgeCost);
+            }
+        }
+
+        return sidetrackEdgeCostMap;
+    }
 
     /**
      * Computes the K shortest paths (allowing cycles) in a graph from node s to node t in graph G using Eppstein's
@@ -95,10 +195,10 @@ public class Eppstein implements KSPAlgorithm {
 
         /* Make indexes to give fast access to these heaps later */
         // Heap H_out(v) for every node v
-        HashMap<String,EppsteinHeap> nodeHeaps = new HashMap<String, EppsteinHeap>(graph.numNodes());
-        HashMap<String,EppsteinHeap> edgeHeaps = new HashMap<String, EppsteinHeap>(graph.numEdges());
+        HashMap<String, EppsteinHeap> nodeHeaps = new HashMap<>(graph.numNodes());
+        HashMap<String, EppsteinHeap> edgeHeaps = new HashMap<>(graph.numEdges());  //no usage, why there?
         // Heap H_T(v) for every node v
-        HashMap<String,EppsteinHeap> outrootHeaps = new HashMap<String, EppsteinHeap>();
+        HashMap<String, EppsteinHeap> outrootHeaps = new HashMap<>();
 
         /* COMPUTE EPPSTEIN HEAP, Part 1: Compute sub-heap H_out(v) for each node v.
             -- H_out(v) is a heap of all of the outgoing sidetrack edges of v. */
@@ -116,6 +216,8 @@ public class Eppstein implements KSPAlgorithm {
             its children instead of its parent. */
         Graph reversedSPT = new Graph();
         for (DijkstraNode node: tree.getNodes().values()) {
+            if (node.getParent() == null)
+                continue;
             reversedSPT.addEdge(node.getParent(),node.getLabel(),graph.getNode(node.getLabel()).getNeighbors().get(node.getParent()));
         }
 
@@ -131,8 +233,8 @@ public class Eppstein implements KSPAlgorithm {
         EppsteinHeap hg = new EppsteinHeap(new Edge(sourceLabel,sourceLabel,0));
 
         // Initialize the containers for the candidate k shortest paths and the actual found k shortest paths
-        ArrayList<Path> ksp = new ArrayList<Path>();
-        PriorityQueue<EppsteinPath> pathPQ = new PriorityQueue<EppsteinPath>();
+        ArrayList<Path> ksp = new ArrayList<>();
+        PriorityQueue<EppsteinPath> pathPQ = new PriorityQueue<>();
 
         // Place root heap in priority queue
         pathPQ.add(new EppsteinPath(hg, -1, tree.getNodes().get(sourceLabel).getDist()));
@@ -162,100 +264,6 @@ public class Eppstein implements KSPAlgorithm {
 
         // Return the set of k shortest paths
         return ksp;
-    }
-
-    /**
-     * Compute the set of sidetrack edge costs.
-     *
-     * Each sidetrack edge (u,v) is an edge in graph G that does not appear in the shortest path tree, T.
-     * For every sidetrack edge (u,v), compute S(u,v) = w(u,v) + d(v) - d(u), where w(u,v) is the cost of edge (u,v);
-     * and d(v) is the cost of the shortest path from node v to the target.
-     *
-     * @param graph     the graph on which to compute the K shortest paths from s to t
-     * @param tree      the shortest path tree, T, rooted at the target node, t
-     * @return
-     */
-    protected static HashMap<String,Double> computeSidetrackEdgeCosts(Graph graph, ShortestPathTree tree) {
-        HashMap<String, Double> sidetrackEdgeCostMap = new HashMap<String, Double>();
-        List<Edge> edgeList = graph.getEdgeList();
-        for (Edge edge : edgeList) {
-            // Check to see if the target node is reachable from the outgoing vertex of the current edge,
-            // and check to see if the current edge is a sidetrack edge. If so, calculate its sidetrack cost.
-            String tp = tree.getParentOf(edge.getFromNode());
-            if (tp == null || !tp.equals(edge.getToNode())) {
-                double sidetrackEdgeCost = edge.getWeight() + tree.getNodes().get(edge.getToNode()).getDist() - tree.getNodes().get(edge.getFromNode()).getDist();
-                sidetrackEdgeCostMap.put(edge.getFromNode() + "," + edge.getToNode(), sidetrackEdgeCost);
-            }
-        }
-
-        return sidetrackEdgeCostMap;
-    }
-
-    /**
-     * Compute sub-heap H_out(v) for node v.
-     *
-     * @param nodeLabel             node v
-     * @param graph                 the graph, G, on which to compute the K shortest paths from s to t
-     * @param sidetrackEdgeCostMap  the cost of each sidetrack edge in G
-     * @param nodeHeaps             an index/hash table of heap H_out(v), for each node v in the graph
-     * @param edgeHeaps             an index/hash table of heaps H_out(v), but indexed by sidetrack edge
-     */
-    protected static void computeOutHeap(String nodeLabel, Graph graph, HashMap<String,Double> sidetrackEdgeCostMap, HashMap<String,EppsteinHeap> nodeHeaps, HashMap<String,EppsteinHeap> edgeHeaps) {
-        Node node = graph.getNode(nodeLabel);
-        // This list holds the 2nd through last sidetrack edges, ordered by sidetrack cost
-        ArrayList<Edge> sidetrackEdges = new ArrayList<Edge>();
-        Edge bestSidetrack = null;
-        double minSidetrackCost = Double.MAX_VALUE;
-        // Iterate over the outgoing edges of v
-        for (String neighbor : node.getAdjacencyList()) {
-            String edgeLabel = nodeLabel+","+neighbor;
-            // Check to see if the current edge is a sidetrack edge
-            if (sidetrackEdgeCostMap.containsKey(edgeLabel)) {
-                double sidetrackEdgeCost = sidetrackEdgeCostMap.get(edgeLabel);
-                // Check to see if the current sidetrack edge has the lowest cost discovered so far for node v
-                if (sidetrackEdgeCost < minSidetrackCost) {
-                    // If there was a previously-known best sidetrack edge, add it to the list of non-best
-                    // sidetrack edges
-                    if (bestSidetrack != null) {
-                        sidetrackEdges.add(bestSidetrack);
-                    }
-                    // Set the new best (lowest cost) sidetrack edge to be the current one
-                    bestSidetrack = new Edge(nodeLabel, neighbor, node.getNeighbors().get(neighbor));
-                    minSidetrackCost = sidetrackEdgeCost;
-                }
-                // If current sidetrack edge is not the one with the lowest cost, add it to the list of non-best
-                // sidetrack edges
-                else {
-                    sidetrackEdges.add(new Edge(nodeLabel, neighbor, node.getNeighbors().get(neighbor)));
-                }
-            }
-        }
-        // If v was found to have at least one outgoing sidetrack edge...
-        if (bestSidetrack != null) {
-            // ...make a heap of the outgoing sidetrack edges of v, with the lowest-cost sidetrack edge put as the
-            // root
-            EppsteinHeap bestSidetrackHeap = new EppsteinHeap(bestSidetrack,sidetrackEdgeCostMap.get(bestSidetrack.getFromNode()+","+bestSidetrack.getToNode()));
-
-            // Make another heap (a binary heap) out of the rest of the sidetrack edges of v
-            EppsteinArrayHeap arrayHeap = new EppsteinArrayHeap();
-            if (sidetrackEdges.size() > 0) {
-                bestSidetrackHeap.setNumOtherSidetracks(bestSidetrackHeap.getNumOtherSidetracks()+1);
-                for (Edge edge : sidetrackEdges) {
-                    EppsteinHeap sidetrackHeap = new EppsteinHeap(edge,sidetrackEdgeCostMap.get(edge.getFromNode()+","+edge.getToNode()));
-                    edgeHeaps.put(edge.getFromNode()+","+edge.getToNode(), sidetrackHeap);
-                    arrayHeap.add(sidetrackHeap);
-                }
-
-                // Add the binary heap of 2nd-through-last lowest cost sidetrack edges as a child (the only child)
-                // of the lowest-cost sidetrack edge, forming the overall heap H_out(v)
-                bestSidetrackHeap.addChild(arrayHeap.toEppsteinHeap());
-            }
-
-            // Index H_out(v) by node v, for easy access later
-            nodeHeaps.put(nodeLabel, bestSidetrackHeap);
-            // Index H_out(v) by its lowest cost sidetrack edge, for easy access later
-            edgeHeaps.put(bestSidetrack.getFromNode()+","+bestSidetrack.getToNode(), bestSidetrackHeap);
-        }
     }
 
     /**
@@ -371,13 +379,13 @@ class EppsteinHeap {
 
     public EppsteinHeap(Edge sidetrack) {
         this.sidetrack = sidetrack;
-        this.children = new ArrayList<EppsteinHeap>();
+        this.children = new ArrayList<>();
     }
 
     public EppsteinHeap(Edge sidetrack, Double sidetrackCost) {
         this.sidetrack = sidetrack;
         this.sidetrackCost = sidetrackCost;
-        this.children = new ArrayList<EppsteinHeap>();
+        this.children = new ArrayList<>();
     }
 
     public EppsteinHeap(Edge sidetrack, double sidetrackCost, ArrayList<EppsteinHeap> children, int numOtherSidetracks) { //, boolean bestChild, int copy) {
@@ -424,7 +432,7 @@ class EppsteinHeap {
     }
 
     public EppsteinHeap clone() {
-        ArrayList<EppsteinHeap> children_clone = new ArrayList<EppsteinHeap>(children.size());
+        ArrayList<EppsteinHeap> children_clone = new ArrayList<>(children.size());
         for (EppsteinHeap eh: children) {
             children_clone.add(eh);
         }
@@ -440,7 +448,7 @@ class EppsteinArrayHeap {
     private ArrayList<EppsteinHeap> arrayHeap;
 
     public EppsteinArrayHeap() {
-        arrayHeap = new ArrayList<EppsteinHeap>(0);
+        arrayHeap = new ArrayList<>(0);
     }
 
     public ArrayList<EppsteinHeap> getArrayHeap() {
@@ -513,7 +521,7 @@ class EppsteinArrayHeap {
         while (current >= 0) {
             EppsteinHeap childHeap = arrayHeap.get(current);
             while (childHeap.getChildren().size() > childHeap.getNumOtherSidetracks()) {
-                childHeap.getChildren().remove(childHeap.getChildren().size()-1);
+                childHeap.getChildren().remove(childHeap.getChildren().size() - 1);
             }
 
             int child1 = current * 2 + 1;
@@ -606,7 +614,7 @@ class EppsteinPath implements Comparable<EppsteinPath> {
             LinkedList<Edge> edges = explicitPrefPath.getEdges();
             int lastEdgeNum = -1;
             Edge heapSidetrack = heap.getSidetrack();
-            for (int i = edges.size()-1; i >= 0; i--) {
+            for (int i = edges.size() - 1; i >= 0; i--) {
                 Edge currentEdge = edges.get(i);
                 if (currentEdge.getToNode().equals(heapSidetrack.getFromNode())) {
                     lastEdgeNum = i;

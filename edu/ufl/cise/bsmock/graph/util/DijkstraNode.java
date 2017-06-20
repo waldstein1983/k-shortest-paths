@@ -1,8 +1,9 @@
 package edu.ufl.cise.bsmock.graph.util;
 
+import edu.ufl.cise.bsmock.graph.Node;
+
 import java.util.HashMap;
 import java.util.Set;
-import edu.ufl.cise.bsmock.graph.*;
 
 /**
  * Created by brandonsmock on 6/6/15.
@@ -50,7 +51,7 @@ public class DijkstraNode extends Node implements Comparable<DijkstraNode> {
     }
 
     public void setParent(String parent) {
-        super.neighbors = new HashMap<String, Double>();
+        super.neighbors = new HashMap<>();
         super.neighbors.put(parent,0.0);
     }
 

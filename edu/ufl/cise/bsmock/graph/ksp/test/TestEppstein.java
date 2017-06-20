@@ -47,10 +47,10 @@ public class TestEppstein {
         //K = 100;
 
         /* Example 3 */
-        graphFilename = "edu/ufl/cise/bsmock/graph/ksp/test/small_road_network_01.txt";
-        sourceNode = "5524";
-        targetNode = "7239";
-        K = 1000;
+        graphFilename = "edu/ufl/cise/bsmock/graph/ksp/test/tiny_graph_04.txt";
+        sourceNode = "1";
+        targetNode = "12";
+        K = 5;
 
         usageExample1(graphFilename,sourceNode,targetNode,K);
     }

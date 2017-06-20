@@ -47,9 +47,9 @@ public class TestLazyEppstein {
         //K = 100;
 
         /* Example 3 */
-        graphFilename = "edu/ufl/cise/bsmock/graph/ksp/test/small_road_network_01.txt";
-        sourceNode = "5524";
-        targetNode = "7239";
+        graphFilename = "edu/ufl/cise/bsmock/graph/ksp/test/tiny_graph_03.txt";
+        sourceNode = "1";
+        targetNode = "6";
         K = 1000;
 
         usageExample1(graphFilename,sourceNode,targetNode,K);
