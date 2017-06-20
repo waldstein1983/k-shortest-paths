@@ -1,11 +1,12 @@
 package edu.ufl.cise.bsmock.graph.util;
 
 import java.util.*;
+
 import edu.ufl.cise.bsmock.graph.*;
 
 /**
  * The Path class implements a path in a weighted, directed graph as a sequence of Edges.
- *
+ * <p>
  * Created by Brandon Smock on 6/18/15.
  */
 public class Path implements Cloneable, Comparable<Path> {
@@ -68,7 +69,7 @@ public class Path implements Cloneable, Comparable<Path> {
 
     public void addFirstNode(String nodeLabel) {
         String firstNode = edges.getFirst().getFromNode();
-        edges.addFirst(new Edge(nodeLabel, firstNode,0));
+        edges.addFirst(new Edge(nodeLabel, firstNode, 0));
     }
 
     public void addFirst(Edge edge) {
@@ -83,7 +84,7 @@ public class Path implements Cloneable, Comparable<Path> {
 
     public void addLastNode(String nodeLabel) {
         String lastNode = edges.getLast().getToNode();
-        edges.addLast(new Edge(lastNode, nodeLabel,0));
+        edges.addLast(new Edge(lastNode, nodeLabel, 0));
     }
 
     public int size() {
@@ -181,7 +182,7 @@ public class Path implements Cloneable, Comparable<Path> {
             edges.add(edge);
         }
 
-        return new Path(edges,this.totalCost);
+        return new Path(edges, this.totalCost);
     }
 
     public Path cloneTo(int i) {
@@ -201,7 +202,7 @@ public class Path implements Cloneable, Comparable<Path> {
     public Path cloneFrom(int i) {
         LinkedList<Edge> edges = new LinkedList<Edge>();
 
-        for (Edge edge : this.edges.subList(i,this.edges.size())) {
+        for (Edge edge : this.edges.subList(i, this.edges.size())) {
             edges.add(edge.clone());
         }
 

@@ -2,13 +2,14 @@ package edu.ufl.cise.bsmock.graph;
 
 /**
  * The Edge class implements standard properties and methods for a weighted edge in a directed graph.
- *
+ * <p>
  * Created by Brandon Smock on 6/19/15.
  */
 public class Edge implements Cloneable {
     private String fromNode;
     private String toNode;
     private double weight;
+    private double capacity;
 
     public Edge() {
         this.fromNode = null;
@@ -21,6 +22,14 @@ public class Edge implements Cloneable {
         this.toNode = toNode;
         this.weight = weight;
     }
+
+    public Edge(String fromNode, String toNode, double weight, double capacity) {
+        this.fromNode = fromNode;
+        this.toNode = toNode;
+        this.weight = weight;
+        this.capacity = capacity;
+    }
+
 
     public String getFromNode() {
         return fromNode;
@@ -44,6 +53,14 @@ public class Edge implements Cloneable {
 
     public void setWeight(double weight) {
         this.weight = weight;
+    }
+
+    public double getCapacity() {
+        return capacity;
+    }
+
+    public void setCapacity(double capacity) {
+        this.capacity = capacity;
     }
 
     public Edge clone() {

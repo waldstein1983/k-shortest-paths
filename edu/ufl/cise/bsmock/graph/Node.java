@@ -13,8 +13,9 @@ import java.util.LinkedList;
 import java.util.Set;
 
 public class Node {
-    private String label;
+    protected String label;
     protected HashMap<String,Double> neighbors; // adjacency list, with HashMap for each edge weight
+    protected HashMap<String,Double> neighborCapacities;
 
     public Node() {
         neighbors = new HashMap();
@@ -23,6 +24,7 @@ public class Node {
     public Node(String label) {
         this.label = label;
         neighbors = new HashMap();
+        neighborCapacities = new HashMap();
     }
 
     public String getLabel() {
@@ -45,6 +47,11 @@ public class Node {
         neighbors.put(toNodeLabel, weight);
     }
 
+    public void addEdge(String toNodeLabel,Double weight, double capacity) {
+        neighbors.put(toNodeLabel, weight);
+        neighborCapacities.put(toNodeLabel, capacity);
+    }
+
     public double removeEdge(String toNodeLabel) {
         if (neighbors.containsKey(toNodeLabel)) {
             double weight = neighbors.get(toNodeLabel);
@@ -63,6 +70,15 @@ public class Node {
         LinkedList<Edge> edges = new LinkedList<Edge>();
         for (String toNodeLabel : neighbors.keySet()) {
             edges.add(new Edge(label,toNodeLabel,neighbors.get(toNodeLabel)));
+        }
+
+        return edges;
+    }
+
+    public LinkedList<Edge> getEdgesWithCapacity() {
+        LinkedList<Edge> edges = new LinkedList<Edge>();
+        for (String toNodeLabel : neighbors.keySet()) {
+            edges.add(new Edge(label,toNodeLabel,neighbors.get(toNodeLabel),neighborCapacities.get(toNodeLabel)));
         }
 
         return edges;

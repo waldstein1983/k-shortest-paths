@@ -10,7 +10,7 @@ import java.io.*;
 import java.util.*;
 
 public class Graph {
-    private HashMap<String,Node> nodes;
+    protected HashMap<String,Node> nodes;
 
     public Graph() {
         nodes = new HashMap<>();
@@ -54,6 +54,15 @@ public class Graph {
         if (!nodes.containsKey(label2))
             addNode(label2);
         nodes.get(label1).addEdge(label2,weight);
+    }
+
+    public void addEdge(String label1, String label2, Double weight ,double capacity) {
+        if (!nodes.containsKey(label1))
+            addNode(label1);
+        if (!nodes.containsKey(label2))
+            addNode(label2);
+//        nodes.get(label1).addEdge(label2,weight);
+        nodes.get(label1).addEdge(label2,weight, capacity);
     }
 
     public void addEdge(Edge edge) {
@@ -171,8 +180,9 @@ public class Graph {
 
             while (line != null) {
                 String[] edgeDescription = line.split("\\s");
-                if (edgeDescription.length == 3) {
-                    addEdge(edgeDescription[0],edgeDescription[1],Double.parseDouble(edgeDescription[2]));
+                if (edgeDescription.length == 4) {
+//                    addEdge(edgeDescription[0],edgeDescription[1],Double.parseDouble(edgeDescription[2]));
+                    addEdge(edgeDescription[0],edgeDescription[1],Double.parseDouble(edgeDescription[2]),Double.parseDouble(edgeDescription[3]));
                     //addEdge(edgeDescription[1],edgeDescription[0],Double.parseDouble(edgeDescription[2]));
                 }
                 line = in.readLine();
